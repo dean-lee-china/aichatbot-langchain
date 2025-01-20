@@ -17,14 +17,21 @@ Deploying:
 The output should be similar to:
 ---------------------------------
 > columbus@1.0.0 dev
+
 > nodemon index.js
 
 [nodemon] 3.1.9
+
 [nodemon] to restart at any time, enter `rs`
+
 [nodemon] watching path(s): *.*
+
 [nodemon] watching extensions: js,mjs,cjs,json
+
 [nodemon] starting `node index.js`
+
 (node:105005) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
+
 Slack Bolt [Columbus] is running on port 8081!
 
