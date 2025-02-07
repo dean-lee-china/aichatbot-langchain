@@ -2,6 +2,8 @@ import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";
+import { RunnableWithMessageHistory } from "@langchain/core/runnables";
 
 const llmModel = new ChatOpenAI({
   model: "gpt-4o-mini",
@@ -10,20 +12,45 @@ const llmModel = new ChatOpenAI({
 
 const parser =  new StringOutputParser();
 
-export async function talk2AI( question: string ) {
+const messageHistory: Record<string, InMemoryChatMessageHistory> = {};
 
-	console.log( `Slack bot was asked: ${question}` );
+const context = ChatPromptTemplate.fromMessages([
+    [ "system", `Your name is Columbus, an AI Chatbot powered by openAI.`, ],
+    [ "placeholder", "{chat_history}" ],
+    [ "human", "{input}" ],
+]);
 
-	const prompt = ChatPromptTemplate.fromMessages([
+const dialog = context.pipe( llmModel );
+
+const withMessageHistory = new RunnableWithMessageHistory({
+    runnable: dialog,
+    getMessageHistory: async( sessionId: string ) => {
+        if( messageHistory[ sessionId ] === undefined ){
+            messageHistory[ sessionId ] = new InMemoryChatMessageHistory();
+        }
+        return messageHistory[ sessionId ];
+    },
+    inputMessagesKey: "input",
+    historyMessagesKey: "chat_history",
+});
+
+const config = {
+    configurable: {
+        sessionId: "dean1873",
+    }
+};
+
+
+export async function talk2AI( words: string ) {
+
+	console.log( `Somebody asked Columbus: ${words}` );
+	/*const prompt = ChatPromptTemplate.fromMessages([
 		new SystemMessage( "You are a helpful assistant" ),
 		new HumanMessage( question )
 	]);
-
-	const chain = prompt.pipe( llmModel ).pipe( parser );
-	const answer = await chain.invoke( question );
-
-	//console.log( "---- Frome OpenAI ----");
-	//console.log( answer );
-	return answer;
+	const chain = prompt.pipe( llmModel ).pipe( parser );*/
+	//const answer = await chain.invoke( question );
+	const response = await withMessageHistory.invoke( { input: words }, config );
+	return response.content;
 }
 

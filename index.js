@@ -34,7 +34,6 @@ app.command( "/captain", async( command, ack, say ) => {
 
 // Process Slack message events.
 app.message( matchMessage('<'), async ({ context, message, say }) => {
-//app.message( subtype('message_changed'), async ({ context, message, say }) => {
 
     try {
 		//console.log( context );
