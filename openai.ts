@@ -31,16 +31,13 @@ const withMessageHistory = new RunnableWithMessageHistory({
     historyMessagesKey: "chat_history",
 });
 
-const config = {
-    configurable: {
-        sessionId: "dean1873",
-    }
-};
 
 
-export async function talk2AI( words: string ) {
+export async function talk2AI( who:string,  words:string ) {
 
-	console.log( `Somebody asked Columbus: ${words}` );
+	console.log( `> Slack user [${who}] asked Columbus: ${words}` );
+    const config = { configurable:{ sessionId: who }};
+
 	const response = await withMessageHistory.invoke( { input: words }, config );
 	return response.content;
 }
