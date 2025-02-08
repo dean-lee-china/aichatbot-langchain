@@ -1,6 +1,4 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
-import { StringOutputParser } from "@langchain/core/output_parsers";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";
 import { RunnableWithMessageHistory } from "@langchain/core/runnables";
@@ -10,7 +8,6 @@ const llmModel = new ChatOpenAI({
   temperature: 0
 });
 
-const parser =  new StringOutputParser();
 
 const messageHistory: Record<string, InMemoryChatMessageHistory> = {};
 
@@ -44,12 +41,6 @@ const config = {
 export async function talk2AI( words: string ) {
 
 	console.log( `Somebody asked Columbus: ${words}` );
-	/*const prompt = ChatPromptTemplate.fromMessages([
-		new SystemMessage( "You are a helpful assistant" ),
-		new HumanMessage( question )
-	]);
-	const chain = prompt.pipe( llmModel ).pipe( parser );*/
-	//const answer = await chain.invoke( question );
 	const response = await withMessageHistory.invoke( { input: words }, config );
 	return response.content;
 }
