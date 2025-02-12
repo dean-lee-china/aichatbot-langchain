@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A Slack chabot backend using OpenAI via LangChain",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
@@ -13,6 +14,7 @@
   "author": "huoding.li@compass.com",
   "license": "ISC",
   "dependencies": {
+    "@langchain/community": "^0.3.30",
     "@langchain/core": "^0.3.30",
     "@langchain/google-vertexai": "0.1.8",
     "@langchain/openai": "^0.3.17",
@@ -23,9 +25,10 @@
     "@types/node": "^22.10.7",
     "axios": "1.7.9",
     "body-parser": "1.20.3",
+    "cheerio": "^1.0.0",
     "dotenv": "16.4.7",
     "express": "4.21.2",
-    "langchain": "0.3.11",
+    "langchain": "^0.3.11",
     "openai": "4.78.1",
     "readable-stream": "^4.7.0",
     "typescript": "^5.7.3",

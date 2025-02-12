@@ -8,11 +8,15 @@
  * by huoding.li@compass.com
  * Jan 8th, 2025
  */
-global.ReadableStream = require('web-streams-polyfill').ReadableStream;
 
-require("dotenv").config();
-const { App, matchMessage, subtype } = require("@slack/bolt");
-const { talk2AI } = require("./openai");
+import { talk2AI } from "./openai.js";
+import { config } from "dotenv";
+import { ReadableStream } from "web-streams-polyfill";
+import slackBot from '@slack/bolt';
+
+const { App, matchMessage, subtype } = slackBot;
+global.ReadableStream = ReadableStream;
+config();
 
 //
 // Initializes your app with your bot token and signing secret
