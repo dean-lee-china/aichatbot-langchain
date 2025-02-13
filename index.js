@@ -66,7 +66,8 @@ app.message( matchMessage('<'), async ({ context, message, say }) => {
       	await say( reply );
 
     } catch (error) {
-        console.log("Columbus is deaf!")
+        console.log("FATA Internal ERROR: Columbus is deaf!");
+        console.log("======================================");
 	    console.error(error);
     }
 
