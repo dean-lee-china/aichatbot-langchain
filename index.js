@@ -45,7 +45,7 @@ app.command( "/captain", async( command, ack, say ) => {
 // Process Slack message events.
 // Slack message is always start with <$USER_ID> $CHAT_CONTENT
 //
-app.message( matchMessage('<'), async ({ context, message, say }) => {
+app.message( matchMessage('<@'), async ({ context, message, say }) => {
 
     try {
 
@@ -62,8 +62,9 @@ app.message( matchMessage('<'), async ({ context, message, say }) => {
 		    msg = msg.replace( atBotPrefix, '' );
         }
 
+        const atUserPrefix = '<@' + userId + '> ';
 		const reply = await talk2AI( userId,  msg );
-      	await say( reply );
+      	await say( atUserPrefix + reply );
 
     } catch (error) {
         console.log("FATA Internal ERROR: Columbus is deaf!");

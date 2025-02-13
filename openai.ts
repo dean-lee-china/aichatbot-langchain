@@ -1,3 +1,4 @@
+
 import { ChatOpenAI } from "@langchain/openai";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { 
@@ -16,8 +17,26 @@ import {
 
 import { UpstashRedisChatMessageHistory } from "@langchain/community/stores/message/upstash_redis";
 
+import dotenv from "dotenv";
+import { getTimeStamp } from "./utils.js";
+
+dotenv.config();
+//-- Load Redis configuration
+if ( !process.env.UPSTASH_REDIS_REST_URL ||
+     !process.env.UPSTASH_REDIS_REST_TOKEN ){
+    throw new Error("FATAL ERROR: Missing Upstash Redis REST URL or REST TOKEN!");
+}
+//-- Load OpenAi configuration
+if ( !process.env.OPENAI_API_KEY ){
+    throw new Error("FATAL ERROR: Missing OpenAI API TOKEN!");
+}
+
 //-- Step1: creating a LLM with OpenAI GPT-4o
-const llm = new ChatOpenAI({ model: "gpt-4o", temperature: 0 });
+const llm = new ChatOpenAI({ 
+    model: "gpt-4o", 
+    temperature: 0,
+    openAIApiKey: process.env.OPENAI_API_KEY,
+});
 
 //-- Step2: creating a prompt for talk
 const systemInitMsg = `Your name is Columbus.Christopher, who use to be 
@@ -30,10 +49,12 @@ const Prompt = ChatPromptTemplate.fromMessages([
     [ "human", "{input}" ],
 ]);
 
+
 //-- Step3: create an LLM chain with history
 //-- chat history will be stored in Redis server
 //-- It is redis that responsible for storing the 
 //-- memory to hard drives.
+
 const dialog = Prompt.pipe( llm );
 const mainChain = new RunnableWithMessageHistory({
     runnable: dialog,
@@ -44,10 +65,10 @@ const mainChain = new RunnableWithMessageHistory({
         return messageHistory[ sessionId ];*/
         new UpstashRedisChatMessageHistory({
             sessionId,
-            config:{
-                url:   process.env.REDIS_REST_URL!,
-                token: process.env.REDIS_REST_TOKEN!,
-            }
+            config: {
+                 url: process.env.UPSTASH_REDIS_REST_URL!,
+               token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+           }
         }),
     inputMessagesKey: "input",
     historyMessagesKey: "chat_history",
@@ -64,9 +85,11 @@ const mainChain = new RunnableWithMessageHistory({
  */
 export async function talk2AI( who:string,  words:string ) {
 
-	console.log( `> Slack user [${who}] asked Columbus: ${words}` );
-
-    const config = { configurable: { sessionId: who }};
+    const timeStamp = getTimeStamp();
+	console.log( `[ ${timeStamp} ]> Slack user [${who}] asked Columbus: ${words}` );
+    
+    const id = who + "-" + timeStamp;
+    const config = { configurable: { sessionId: id }};
     const reply = await mainChain.invoke( { input: words }, config );    
 
     return reply.content;
