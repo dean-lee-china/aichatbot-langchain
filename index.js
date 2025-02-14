@@ -8,20 +8,28 @@
  * by huoding.li@compass.com
  * Jan 8th, 2025
  */
-global.ReadableStream = require('web-streams-polyfill').ReadableStream;
 
-require("dotenv").config();
-const { App, matchMessage, subtype } = require("@slack/bolt");
-const { talk2AI } = require("./openai");
+import { talk2AI } from "./openai.js";
+import { config } from "dotenv";
+import { ReadableStream } from "web-streams-polyfill";
+import slackBot from '@slack/bolt';
 
+const { App, matchMessage, subtype } = slackBot;
+global.ReadableStream = ReadableStream;
+config();
 
+//
 // Initializes your app with your bot token and signing secret
+//
 const app = new App({
    signingSecret: process.env.SLACK_SIGNING_SECRET,
    token: process.env.SLACK_BOT_TOKEN,
 });
 
+
+//
 // Processing the slack command /captain
+//
 app.command( "/captain", async( command, ack, say ) => {
 	try{
 		await ack();
@@ -32,30 +40,35 @@ app.command( "/captain", async( command, ack, say ) => {
 	}
 });
 
+
+//
 // Process Slack message events.
-app.message( matchMessage('<'), async ({ context, message, say }) => {
-//app.message( subtype('message_changed'), async ({ context, message, say }) => {
+// Slack message is always start with <$USER_ID> $CHAT_CONTENT
+//
+app.message( matchMessage('<@'), async ({ context, message, say }) => {
 
     try {
-		//console.log( context );
-		//console.log( message );
+
 		let msg = message.text;
-        
-		let head = msg.indexOf("<");
-        if( head > 0 ){
-		    msg = msg.slice( 0, head-1 );
-            msg = msg + " YOU";
+        const userId = context.userId;
+        const botId = context.botUserId;
+       
+        // Preprocessing the message. 
+        const atBotPrefix = '<@' + botId + '>';
+		let idx = msg.indexOf( atBotPrefix );
+        if( idx > 0 ){
+            msg = msg.replace( atBotPrefix, 'you' ); 
         }else{
-            let head2 = msg.indexOf(">, ");
-		    msg = msg.slice( head+3, msg.end );
+		    msg = msg.replace( atBotPrefix, '' );
         }
 
-		const reply = await talk2AI( msg );
-		//console.log( reply );
-      	await say( reply );
+        const atUserPrefix = '<@' + userId + '> ';
+		const reply = await talk2AI( userId,  msg );
+      	await say( atUserPrefix + reply );
 
     } catch (error) {
-        console.log("Columbus is deaf: ")
+        console.log("FATA Internal ERROR: Columbus is deaf!");
+        console.log("======================================");
 	    console.error(error);
     }
 
@@ -66,7 +79,6 @@ app.message( matchMessage('<'), async ({ context, message, say }) => {
 // Start the back-end server listenning to Slack events.
 //
 (async () => {
-     // Start your app
      await app.start( process.env.PORT );
-     console.log(`Slack Bolt [Columbus] is running on port ${process.env.PORT}!`);
+     console.log(`Slack AI Chatbot [Columbus] is listening on port ${process.env.PORT}!`);
 })();
