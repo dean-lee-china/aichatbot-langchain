@@ -1,0 +1,8 @@
+.env
+node_modules/
+openai.js
+utils.js
+redis.js
+file.js
+*.swp
+
