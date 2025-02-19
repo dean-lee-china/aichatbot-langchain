@@ -1,5 +1,7 @@
 .env
+package-lock.json
 node_modules/
+file_lake/*
 openai.js
 utils.js
 redis.js
