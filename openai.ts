@@ -1,4 +1,3 @@
-
 import { ChatOpenAI } from "@langchain/openai";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { 
@@ -15,18 +14,12 @@ import {
     Runnable,
 } from "@langchain/core/runnables";
 
-import { UpstashRedisChatMessageHistory } from "@langchain/community/stores/message/upstash_redis";
-
 import dotenv from "dotenv";
 import { getTimeStamp } from "./utils.js";
+import { loadUserMemory, updateUserMemory } from "./redis.js"; 
 
+//-- Load OpenAI configuration
 dotenv.config();
-//-- Load Redis configuration
-if ( !process.env.UPSTASH_REDIS_REST_URL ||
-     !process.env.UPSTASH_REDIS_REST_TOKEN ){
-    throw new Error("FATAL ERROR: Missing Upstash Redis REST URL or REST TOKEN!");
-}
-//-- Load OpenAi configuration
 if ( !process.env.OPENAI_API_KEY ){
     throw new Error("FATAL ERROR: Missing OpenAI API TOKEN!");
 }
@@ -54,25 +47,34 @@ const Prompt = ChatPromptTemplate.fromMessages([
 //-- chat history will be stored in Redis server
 //-- It is redis that responsible for storing the 
 //-- memory to hard drives.
-
+const messageHistory: Record<string, InMemoryChatMessageHistory> = {};
 const dialog = Prompt.pipe( llm );
+
 const mainChain = new RunnableWithMessageHistory({
     runnable: dialog,
-    getMessageHistory: ( sessionId: string ) => 
-        /*if( messageHistory[ sessionId ] === undefined ){
-            messageHistory[ sessionId ] = new InMemoryChatMessageHistory();
+    getMessageHistory: async ( sessionId: string ) => {
+        // If no memory exist for the current user, try to load memory
+        // from redis server.
+        if( messageHistory[ sessionId ] === undefined ){
+            messageHistory[ sessionId ] = await loadUserMemory( sessionId );
         }
-        return messageHistory[ sessionId ];*/
-        new UpstashRedisChatMessageHistory({
-            sessionId,
-            config: {
-                 url: process.env.UPSTASH_REDIS_REST_URL!,
-               token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-           }
-        }),
+        return messageHistory[ sessionId ];
+    },
     inputMessagesKey: "input",
     historyMessagesKey: "chat_history",
 });
+
+//-- Sync the user Memory with Redis for some minutes
+let interval = 0;
+if( process.env.MEM_SYNC_INTERVAL === undefined ){
+    interval = 60000;
+} else {
+    interval = parseInt( process.env.MEM_SYNC_INTERVAL ); 
+}
+
+setInterval(()=>{
+    updateUserMemory( messageHistory );
+}, interval );
 
 
 /*
@@ -88,11 +90,13 @@ export async function talk2AI( who:string,  words:string ) {
     const timeStamp = getTimeStamp();
 	console.log( `[ ${timeStamp} ]> Slack user [${who}] asked Columbus: ${words}` );
     
-    const id = who + "-" + timeStamp;
+    const id = who;// + "-" + timeStamp;
     const config = { configurable: { sessionId: id }};
+
     const reply = await mainChain.invoke( { input: words }, config );    
 
     return reply.content;
 
 }
+
 

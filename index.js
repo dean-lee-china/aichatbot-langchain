@@ -72,19 +72,7 @@ app.event( 'message', async ({ context, message, say }) => {
             dl.on( 'error', (err) => console.log( `> File ${url} download failed.....` ));
             dl.start().catch( err => console.error(err));
 
-            /*const download = await fetch( url, { 
-                    headers: { 'Authorization':`Bearer ${context.botToken}` }, 
-            });
-            if( !download.ok ){
-                throw new Error( `> ERROR: Failed to donwload ${url}`); 
-            }
-
-            const oStream = createWriteStream( filePath );
-            const iStream = await Stream.Readable.fromWeb( download.body );
-            iStream.pipe( oStream );
-            console.log( `> File ${url} is downloaded.....` );*/
-
-            processFile( userId, fileName );
+            processFile( userId, filePath );
         }
 
         // DEFAULT: normal text message
